@@ -1,0 +1,108 @@
+#include <iostream>
+#include <string>
+#include <cstring>
+#include <fstream>
+#include <vector>
+#include "colormod.h"
+using namespace std;
+
+void searchWord(const vector<vector<char>>& matrix, vector<vector<bool>>& marked,  const string& word, int row, int col, int rowDir, int colDir) {
+    int wordLenght = word.length();
+    int rows = matrix.size();
+    int cols = matrix[0].size();
+
+    // check if the word fits in the given direction
+    for (int i = 0; i < wordLenght; ++i) {
+        int newRow = row + i * rowDir;
+        int newCol = col + i * colDir;
+
+        // check for out of bounds or character mismatch
+        if (newRow >= rows || newRow < 0 || newCol >= cols || newCol < 0 || matrix[newRow][newCol] != word[i]) {
+            return; // if returns true then return because of out of bounds or not the next character
+        }
+    }
+
+    // mark the position of the character and store it into marked for later output
+    for (int i = 0; i < wordLenght; ++i) {
+        int newRow = row + i * rowDir;
+        int newCol = col + i * colDir;
+        marked[newRow][newCol] = true; 
+    }
+}
+
+void findWordInMatrix(vector<vector<char>>& matrix, vector<vector<bool>>& marked, const string& word) {
+    int rows = matrix.size();
+    int cols = matrix[0].size();
+
+    // array for all 8 directions to check
+    int directions[8][2] = {{0, 1}, {1, 0}, {1, 1}, {1, -1}, {-1, 0}, {0, -1}, {-1, 1}, {-1, -1}};
+
+    //  go thorugh the matrix one row and col at a time 
+    for (int row = 0; row < rows; ++row) {
+        for (int col = 0; col < cols; ++col) {
+            // try all 8 directions 
+            for (int d = 0; d < 8; ++d) {
+                int rowDir = directions[d][0];
+                int colDir = directions[d][1];
+                
+                // search for the word in the current direction
+                searchWord(matrix, marked, word, row, col, rowDir, colDir);
+            }
+        }
+    }
+}
+
+
+//Function fills in marked vector with all values of matrix vector but turn specific characters red
+void printMatrix(const vector<vector<char>>& matrix, const vector<vector<bool>>& marked) {
+    int rows = matrix.size();
+    int cols = matrix[0].size();
+
+    Color::Setting red(Color::FG_RED);
+    Color::Setting def(Color::FG_DEFAULT);
+    
+    for (int row = 0; row < rows; ++row) {
+        for (int col = 0; col < cols; ++col) {
+            if (marked[row][col]) {
+                cout << red << matrix[row][col] << ' ' << def;
+            } else {
+                cout << matrix[row][col] << ' ';
+            }
+        }
+        cout << endl;
+    }
+}
+
+int main(int argc, char* argu[]){
+
+    //Create vector of words to search
+    vector<string> words;           
+    for (int i = 1; i < argc; ++i) {
+        words.push_back(argu[i]);
+    }
+
+    //Get matrix rows and cols
+    int rows, cols;
+    cin >> rows >> cols;
+
+    //Create matrix from file
+    vector<vector<char>>matrix (rows, vector<char>(cols));
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            cin >> matrix[i][j];
+        }
+    }
+
+    //Create matrix for red characters
+    vector<vector<bool>> marked(rows, vector<bool>(cols, false));
+
+    //Search the matrix for every word that is in the words vector
+    for (long long unsigned int i = 0; i < words.size(); i++) {
+        string word = words[i];
+        findWordInMatrix(matrix, marked, word);
+    }
+
+    //Print red characters on the matrix
+    printMatrix(matrix, marked);
+    
+}
